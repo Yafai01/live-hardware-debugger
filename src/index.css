@@ -1,0 +1,45 @@
+:root {
+  --bg: #041018;
+  --panel: #061620;
+  --accent: #0ff6b8;
+  --muted: #8aa;
+}
+
+html,body,#root {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: #d9f6ee;
+  font-family: system-ui, sans-serif;
+}
+
+h1 { color: var(--accent); }
+h4 { color: var(--accent); }
+
+button {
+  background: #0b2b2a;
+  color: var(--accent);
+  border: 1px solid #083;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+input,select {
+  background: #071318;
+  color: #cfe;
+  border: 1px solid #032;
+  padding: 6px;
+  border-radius: 4px;
+}
+
+pre {
+  color: #9ef9d1;
+  display: inline-block;
+  margin: 0;
+  white-space: pre-wrap;
+}
