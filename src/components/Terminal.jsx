@@ -1,36 +1,93 @@
-import React from "react";
-import { saveAs } from "file-saver";
+import { useEffect, useRef } from "react";
+import { DownloadIcon, TrashIcon } from "./Icons";
 
-export default function Terminal({ lines, onClear }) {
-  function download() {
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    saveAs(blob, "log.txt");
+const KIND_LABEL = {
+  rx: "RX",
+  "rx-json": "JSON",
+  tx: "TX",
+  info: "INFO",
+  ok: "OK",
+  error: "ERR",
+};
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour12: false });
+}
+
+function downloadLog(logs) {
+  const text = logs
+    .map((l) => `[${l.time.toISOString()}] ${KIND_LABEL[l.kind] ?? l.kind} ${l.text}`)
+    .join("\n");
+  const blob = new Blob([text + "\n"], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `serial-log-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export default function Terminal({ logs, onClear }) {
+  const scrollRef = useRef(null);
+  const stickToBottom = useRef(true);
+
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
   }
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && stickToBottom.current) el.scrollTop = el.scrollHeight;
+  }, [logs]);
+
   return (
-    <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        <button onClick={download}>Download Log</button>
-        <button onClick={onClear}>Clear</button>
-        <div style={{ flex: 1 }} />
-        <small>Logs: {lines.length}</small>
+    <section className="card terminal-card" aria-labelledby="terminal-heading">
+      <div className="card-header">
+        <h2 id="terminal-heading">Terminal</h2>
+        <span className="muted small">{logs.length} lines</span>
+        <div className="spacer" />
+        <button
+          type="button"
+          className="btn btn-small"
+          onClick={() => downloadLog(logs)}
+          disabled={!logs.length}
+        >
+          <DownloadIcon />
+          Download
+        </button>
+        <button type="button" className="btn btn-small" onClick={onClear} disabled={!logs.length}>
+          <TrashIcon />
+          Clear
+        </button>
       </div>
 
       <div
-        style={{
-          height: 300,
-          overflow: "auto",
-          background: "#001010",
-          color: "#7CFC00",
-          padding: 10,
-          fontFamily: "monospace",
-          borderRadius: 8
-        }}
+        ref={scrollRef}
+        className="terminal"
+        onScroll={handleScroll}
+        role="log"
+        aria-live="off"
+        aria-label="Serial output"
+        tabIndex={0}
       >
-        {lines.map((l, i) => (
-          <pre key={i}>{l}</pre>
-        ))}
+        {logs.length === 0 ? (
+          <p className="terminal-empty">
+            No output yet. Connect a device or start the simulated device to see data here.
+          </p>
+        ) : (
+          logs.map((l) => (
+            <div key={l.id} className={`terminal-line kind-${l.kind}`}>
+              <span className="terminal-time">{formatTime(l.time)}</span>
+              <span className="terminal-kind">{KIND_LABEL[l.kind] ?? l.kind}</span>
+              <span className="terminal-text">{l.text}</span>
+            </div>
+          ))
+        )}
       </div>
-    </div>
+    </section>
   );
 }
