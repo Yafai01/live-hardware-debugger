@@ -1,215 +1,128 @@
-⚡ Live Hardware Debugger 
+# Live Hardware Debugger
 
-A sci-fi-grade, browser-powered, real-time hardware debugging dashboard.
-Runs on Vite + React + WebSerial.
-Speaks fluent JSON. Draws charts like Iron Man’s HUD.
-Probably cooler than your lab equipment.
+A browser-based serial monitor, command console and live telemetry dashboard for microcontrollers, built on the Web Serial API.
 
-🔗 Live Demo: https://live-hardware-debugger.vercel.app/
+Live deployment: https://live-hardware-debugger.vercel.app/ (built from the `main` branch)
 
-🔥 Powered by Vercel
-😎 Built by Yafai, the guy who doesn’t give up.
+## What it does
 
-🧠 What is this thing?
+Connect an Arduino, ESP32 or any USB-serial device straight from the browser, with no desktop app or driver install beyond the USB-serial driver itself. The dashboard shows everything the device prints, charts JSON telemetry in real time, plots the raw byte stream and lets you send text or JSON commands back.
 
-This isn’t “another serial monitor.”
+## Features
 
-This is:
+- **Serial connection** over Web Serial with selectable baud rate (9600 to 921600), clean connect/disconnect and clear status reporting (connecting, connected, reconnecting, disconnected).
+- **Auto-reconnect** (optional): if the device is unplugged or resets, the app retries for about a minute and reopens the same previously granted port when it reappears.
+- **Terminal** with timestamps, colour-coded line types (received text, received JSON, sent, info, OK, error), automatic JSON detection, auto-scroll that pauses when you scroll up, and log download as a `.txt` file. Keeps the most recent 500 lines.
+- **Telemetry chart** for `temp`, `volt` and `rpm` values found in JSON lines (aliases `temperature` and `voltage` are accepted). Temperature and voltage share the left axis and RPM has its own right axis. Rolling window of the last 80 samples; missing values appear as gaps, not zeros.
+- **Byte oscilloscope** that plots the last 1024 raw bytes received (values 0-255) as a line or points.
+- **Command console and macros**: free-form text/JSON commands plus one-click `START`, `STOP`, `STATUS`, `{"ping":true}` and `{"set_rpm":n}`. Optional `STATUS` polling every 2 seconds.
+- **Settings panel**: theme, default baud rate, auto-reconnect, STATUS polling, chart smoothing and oscilloscope style, saved in the browser's LocalStorage.
+- **Light and dark themes** (light by default).
+- **Simulated device**: generates synthetic temperature/voltage/RPM data and answers the macro commands so you can try the UI without hardware. It is labelled "Simulated device" in the header and in the device panel whenever it is active.
 
-A real-time hardware analyzer
+## Current limitations
 
-A command console
+- Web Serial only works in desktop Chromium-based browsers (Chrome, Edge, Opera) and only in a secure context (HTTPS or `localhost`). Firefox, Safari and mobile browsers show a notice and can only use the simulated device.
+- Only `temp`, `volt` and `rpm` are charted; other JSON keys are shown in the terminal but not plotted.
+- Lines are decoded as UTF-8 and split on newlines. Binary protocols are not decoded (the oscilloscope still shows their bytes).
+- The serial connection code is not covered by automated tests (it needs real hardware); parsing, settings and simulator logic are.
+- What `START`, `STOP`, `STATUS` and `set_rpm` do is up to your firmware. The example sketches below implement them.
 
-A live telemetry dashboard
+## Tech stack
 
-A byte-level oscilloscope
+| Part | Technology |
+| --- | --- |
+| UI | React 18 |
+| Build / dev server | Vite 8 |
+| Charts | Chart.js 4 with react-chartjs-2 |
+| Device access | Web Serial API |
+| Tests | Vitest |
+| Lint | ESLint 9 (flat config) with React Hooks rules |
+| Hosting | Vercel (static build) |
 
-A themeable control room UI
+## Project structure
 
-A JSON debugger
+```
+firmware/
+  arduino_debug/arduino_debug.ino   Example sketch for AVR Arduino boards
+  esp32_debug/esp32_debug.ino       Example sketch for ESP32
+public/
+  favicon.svg
+src/
+  main.jsx                Entry point, applies saved theme before first paint
+  App.jsx                 Page layout and settings state
+  index.css               Design tokens (light/dark) and component styles
+  components/
+    DevicePanel.jsx       Connect/disconnect, baud rate, Web Serial support notice
+    CommandMacros.jsx     Command input, macro buttons, set_rpm
+    Terminal.jsx          Log view and download
+    LiveChart.jsx         Telemetry chart
+    Oscilloscope.jsx      Canvas plot of raw bytes (requestAnimationFrame)
+    SettingsPanel.jsx     Settings dialog
+    Icons.jsx             Inline SVG icons
+  hooks/
+    useDevice.js          Connection lifecycle and batched data handling
+  lib/
+    serial.js             Web Serial connection, read loop, auto-reconnect
+    simulator.js          Simulated device
+    telemetry.js          Line splitting, JSON parsing, metric extraction
+    settings.js           Settings validation and LocalStorage persistence
+    __tests__/            Vitest unit tests
+```
 
-A Bond-villain-style monitoring panel
+## Prerequisites
 
-All running in your browser.
-No apps. No installations. No excuses.
+- Node.js 20.19 or newer (required by Vite 8) and npm
+- A desktop Chromium-based browser for real hardware
+- A device that writes newline-terminated lines over USB serial
 
-🎯 Why does it exist?
+## Setup and development
 
-Because normal serial monitors are boring.
-Because real engineers deserve shiny buttons.
-Because debugging hardware should feel like hacking a spaceship, not reading a spreadsheet.
-
-🚀 Features (aka “Why this is cooler than your old tools”)
-💬 Serial Connection + Auto Reconnect
-
-Connect to hardware over USB, even if the cable wiggles (looking at you, cheap CH340 boards).
-
-🧪 Realtime Terminal
-
-Color-coded logs
-
-Timestamps
-
-Download logs
-
-JSON auto-detection
-
-Works like a cyberpunk console
-
-📈 Live Telemetry Charts
-
-Temperature
-
-RPM
-
-Voltage
-
-Anything your device spits out
-
-80-frame rolling buffer
-
-Smooth and fast
-
-📡 Oscilloscope Mode
-
-Turns raw serial bytes into a waveform.
-Yes — bytes → waves.
-Because why should analog guys have all the fun?
-
-🎮 Macro Commands
-
-One tap → your device obeys:
-
-START
-
-STOP
-
-STATUS
-
-JSON commands
-
-Feels like controlling a drone / robot / reactor.
-(we don’t judge your hobbies)
-
-🎨 Themes
-
-Pick your vibe:
-
-🔥 Dark HUD
-
-🌕 Light Mode
-
-🟩 Matrix / Hacker Mode
-
-Switch instantly. Stores your choice forever.
-(A relationship more stable than your ex, honestly.)
-
-⚙️ Settings Panel
-
-Save baud rate
-
-Auto reconnect
-
-Chart smoothing
-
-Oscilloscope style
-
-Persistent via LocalStorage
-
-Your dashboard. Your rules.
-
-🛠️ Tech Stack That Makes It All Possible
-Technology	Reason
-Vite	Fast as lightning dev server
-React	Components that don’t cry
-Web Serial API	Talk to hardware from the browser
-Chart.js	Sexy graphs
-Vercel	Global deployment like a boss
-📦 Installation (Local)
+```bash
 git clone https://github.com/Yafai01/live-hardware-debugger.git
 cd live-hardware-debugger
 npm install
 npm run dev
+```
 
+Open http://localhost:5173, click **Connect serial port** and pick your device, or click **Start simulated device**.
 
-Then open:
+No environment variables are required.
 
-http://localhost:5173
+## Scripts
 
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | Run ESLint |
+| `npm test` | Run the unit tests once |
+| `npm run test:watch` | Run tests in watch mode |
 
-Boom. You’re in.
+## Device data format
 
-🚀 Deployment
+Send one JSON object per line. Any of these keys are charted:
 
-Already deployed at:
-https://live-hardware-debugger.vercel.app/
+```json
+{"temp": 24.31, "volt": 3.297, "rpm": 3012}
+```
 
-To deploy your own:
+Lines that are not JSON are still shown in the terminal. A JSON reply containing `ack` is highlighted as an acknowledgement, and one containing `error` is highlighted as an error.
 
-npm run build
-vercel --prod
+## Example firmware
 
+Two sketches are included in `firmware/`. Open the folder in the Arduino IDE (each sketch lives in a folder of the same name) and upload it:
 
-Thanks to HTTPS, Web Serial works smoothly.
+- `arduino_debug` for AVR boards: `volt` is a real reading of pin A0 (5 V reference).
+- `esp32_debug` for ESP32: `volt` is a real reading of GPIO 34.
 
-🔥 Example Arduino Firmware
+In both sketches `temp` and `rpm` are synthetic placeholder values; replace them with your own sensor readings. Both stream at 115200 baud and handle `START`, `STOP`, `STATUS`, `{"ping":true}` and `{"set_rpm":n}`.
 
-Just upload the following to any Arduino / ESP board:
+## Deployment
 
-void setup() {
-  Serial.begin(115200);
-}
+The app is a static site. `vercel.json` runs `npm ci` and `npm run build` and serves `dist/`. Any static host works as long as it serves over HTTPS, which Web Serial requires.
 
-void loop() {
-  float temp = 25 + random(-50, 50) * 0.01;
-  int rpm = 3000 + random(-200, 200);
+## License
 
-  Serial.print("{\"temp\":");
-  Serial.print(temp,2);
-  Serial.print(",\"rpm\":");
-  Serial.print(rpm);
-  Serial.println("}");
-
-  delay(200);
-}
-
-
-Data shows up instantly on the dashboard.
-Magic? No. Engineering? Yes.
-
-🎛️ Folder Structure (Clean & Modular)
-src/
-│
-├── main.jsx
-├── App.jsx
-├── index.css
-├── themes/
-│   ├── dark.css
-│   ├── light.css
-│   └── matrix.css
-│
-├── components/
-│   ├── DevicePanel.jsx
-│   ├── CommandMacros.jsx
-│   ├── SettingsPanel.jsx
-│   ├── Terminal.jsx
-│   ├── LiveChart.jsx
-│   └── Oscilloscope.jsx
-│
-└── lib/
-    └── serial.js
-
-
-Every part is plug-and-play.
-
-👨‍💻 Author — Yafai
-
-AIML student.
-Builder of cool stuff.
-Eats bugs for breakfast.
-Doesn’t give up.
-Writes code like it’s poetry.
-Deploys like it’s destiny.
-
-If Tony Stark had a cousin who loved hardware debugging…
-yeah, it would be me.
+No license file is included in this repository. All rights are reserved by the author unless a license is added.
