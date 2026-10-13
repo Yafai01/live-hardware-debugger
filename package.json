@@ -1,21 +1,34 @@
 {
-  "name": "live-hw-debugger",
+  "name": "live-hardware-debugger",
   "version": "1.0.0",
+  "description": "Browser-based serial monitor, command console and telemetry dashboard using the Web Serial API",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "chart.js": "^4.4.0",
+    "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
-    "file-saver": "^2.0.5"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^5.0.0",
-    "@vitejs/plugin-react": "^4.0.0"
+    "@eslint/js": "^9.39.5",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
   }
 }
