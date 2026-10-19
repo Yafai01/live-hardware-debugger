@@ -1,215 +1,90 @@
-⚡ Live Hardware Debugger 
+# Live Hardware Debugger
 
-A sci-fi-grade, browser-powered, real-time hardware debugging dashboard.
-Runs on Vite + React + WebSerial.
-Speaks fluent JSON. Draws charts like Iron Man’s HUD.
-Probably cooler than your lab equipment.
+A browser-based serial monitor and telemetry dashboard for microcontrollers such as Arduino and ESP32. It connects to a device over USB using the Web Serial API, logs every line it receives, parses JSON telemetry into live charts, renders raw bytes as an oscilloscope-style waveform, and lets you send commands back to the device. No desktop software is required.
 
-🔗 Live Demo: https://live-hardware-debugger.vercel.app/
+**Live demo:** https://live-hardware-debugger.vercel.app/
 
-🔥 Powered by Vercel
-😎 Built by Yafai, the guy who doesn’t give up.
+## Features
 
-🧠 What is this thing?
+- **Serial connection** via the Web Serial API with selectable baud rate (9600 to 230400) and optional auto-reconnect.
+- **Live terminal** with timestamped log lines, clear, and download-to-file (`log.txt`).
+- **JSON telemetry parsing** – lines such as `{"temp": 24.5, "rpm": 3000}` are plotted on a rolling 80-point Chart.js line chart (`temp` and `rpm` series). `ack` and `error` fields are surfaced in the log.
+- **Oscilloscope view** – raw serial bytes drawn as a waveform on a canvas.
+- **Command console** – send free-form text or JSON commands.
+- **Command macros** – one-click `START`, `STOP`, `STATUS`, JSON ping, and `set_rpm`.
+- **Status polling** – sends `STATUS` every 2 seconds while connected.
+- **Example firmware** for Arduino and ESP32 that streams JSON telemetry (`src/arduino_debug.ino`, `src/esp32_debug.ino`).
 
-This isn’t “another serial monitor.”
+## Tech stack
 
-This is:
+- React 18
+- Vite
+- Web Serial API
+- Chart.js with react-chartjs-2
+- file-saver
 
-A real-time hardware analyzer
+## Getting started
 
-A command console
+### Prerequisites
 
-A live telemetry dashboard
+- Node.js (a recent LTS release) and npm
+- A Chromium-based browser (Chrome, Edge, Opera) – Web Serial is not available in Firefox or Safari
+- A board that prints newline-terminated lines over serial (115200 baud in the examples)
 
-A byte-level oscilloscope
+### Install and run
 
-A themeable control room UI
-
-A JSON debugger
-
-A Bond-villain-style monitoring panel
-
-All running in your browser.
-No apps. No installations. No excuses.
-
-🎯 Why does it exist?
-
-Because normal serial monitors are boring.
-Because real engineers deserve shiny buttons.
-Because debugging hardware should feel like hacking a spaceship, not reading a spreadsheet.
-
-🚀 Features (aka “Why this is cooler than your old tools”)
-💬 Serial Connection + Auto Reconnect
-
-Connect to hardware over USB, even if the cable wiggles (looking at you, cheap CH340 boards).
-
-🧪 Realtime Terminal
-
-Color-coded logs
-
-Timestamps
-
-Download logs
-
-JSON auto-detection
-
-Works like a cyberpunk console
-
-📈 Live Telemetry Charts
-
-Temperature
-
-RPM
-
-Voltage
-
-Anything your device spits out
-
-80-frame rolling buffer
-
-Smooth and fast
-
-📡 Oscilloscope Mode
-
-Turns raw serial bytes into a waveform.
-Yes — bytes → waves.
-Because why should analog guys have all the fun?
-
-🎮 Macro Commands
-
-One tap → your device obeys:
-
-START
-
-STOP
-
-STATUS
-
-JSON commands
-
-Feels like controlling a drone / robot / reactor.
-(we don’t judge your hobbies)
-
-🎨 Themes
-
-Pick your vibe:
-
-🔥 Dark HUD
-
-🌕 Light Mode
-
-🟩 Matrix / Hacker Mode
-
-Switch instantly. Stores your choice forever.
-(A relationship more stable than your ex, honestly.)
-
-⚙️ Settings Panel
-
-Save baud rate
-
-Auto reconnect
-
-Chart smoothing
-
-Oscilloscope style
-
-Persistent via LocalStorage
-
-Your dashboard. Your rules.
-
-🛠️ Tech Stack That Makes It All Possible
-Technology	Reason
-Vite	Fast as lightning dev server
-React	Components that don’t cry
-Web Serial API	Talk to hardware from the browser
-Chart.js	Sexy graphs
-Vercel	Global deployment like a boss
-📦 Installation (Local)
+```bash
 git clone https://github.com/Yafai01/live-hardware-debugger.git
 cd live-hardware-debugger
 npm install
 npm run dev
+```
 
+Open `http://localhost:5173`, click **Connect Serial**, and choose your device. Web Serial requires a secure context (`localhost` or HTTPS).
 
-Then open:
+### Scripts
 
-http://localhost:5173
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server |
+| `npm run build` | Build for production into `dist/` |
+| `npm run preview` | Preview the production build |
 
+### Device firmware
 
-Boom. You’re in.
+Flash one of the included sketches, or have your firmware print one JSON object per line:
 
-🚀 Deployment
-
-Already deployed at:
-https://live-hardware-debugger.vercel.app/
-
-To deploy your own:
-
-npm run build
-vercel --prod
-
-
-Thanks to HTTPS, Web Serial works smoothly.
-
-🔥 Example Arduino Firmware
-
-Just upload the following to any Arduino / ESP board:
-
-void setup() {
-  Serial.begin(115200);
-}
+```cpp
+void setup() { Serial.begin(115200); }
 
 void loop() {
-  float temp = 25 + random(-50, 50) * 0.01;
-  int rpm = 3000 + random(-200, 200);
-
-  Serial.print("{\"temp\":");
-  Serial.print(temp,2);
-  Serial.print(",\"rpm\":");
-  Serial.print(rpm);
+  float temp = 24.0 + sin(millis() / 5000.0) * 2.5;
+  int rpm = 3000 + (millis() / 10) % 500;
+  Serial.print("{\"temp\":"); Serial.print(temp, 2);
+  Serial.print(",\"rpm\":");  Serial.print(rpm);
   Serial.println("}");
-
-  delay(200);
+  delay(250);
 }
+```
 
+## Project structure
 
-Data shows up instantly on the dashboard.
-Magic? No. Engineering? Yes.
-
-🎛️ Folder Structure (Clean & Modular)
+```
 src/
-│
-├── main.jsx
-├── App.jsx
-├── index.css
-├── themes/
-│   ├── dark.css
-│   ├── light.css
-│   └── matrix.css
-│
-├── components/
-│   ├── DevicePanel.jsx
-│   ├── CommandMacros.jsx
-│   ├── SettingsPanel.jsx
-│   ├── Terminal.jsx
-│   ├── LiveChart.jsx
-│   └── Oscilloscope.jsx
-│
-└── lib/
-    └── serial.js
+  App.jsx                 # Dashboard layout and data flow
+  components/
+    DevicePanel.jsx       # Connect/disconnect, baud rate, command console
+    CommandMacros.jsx     # Preset commands
+    Terminal.jsx          # Log view with download/clear
+    LiveChart.jsx         # Chart.js telemetry chart
+    Oscilloscope.jsx      # Canvas waveform of raw bytes
+  lib/
+    serial.js             # Web Serial helpers
+    usb.js                # WebUSB helpers (not yet wired into the UI)
+  arduino_debug.ino       # Example Arduino sketch
+  esp32_debug.ino         # Example ESP32 sketch
+```
 
+## Author
 
-Every part is plug-and-play.
-
-👨‍💻 Author — Yafai
-
-AIML student.
-Builder of cool stuff.
-Eats bugs for breakfast.
-Doesn’t give up.
-Writes code like it’s poetry.
-Deploys like it’s destiny.
-
-If Tony Stark had a cousin who loved hardware debugging…
-yeah, it would be me.
+Yafai ([@Yafai01](https://github.com/Yafai01))
